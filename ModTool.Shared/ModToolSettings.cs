@@ -100,7 +100,7 @@ namespace ModTool.Shared
         
         [HideInInspector]
         [SerializeField]
-        private ModPlatform _supportedPlatforms = ModPlatform.Android | ModPlatform.Linux | ModPlatform.OSX | ModPlatform.Windows;
+        private ModPlatform _supportedPlatforms = ModPlatform.iPhone | ModPlatform.Android | ModPlatform.Linux | ModPlatform.OSX | ModPlatform.Windows;
 
         [HideInInspector]
         [SerializeField]

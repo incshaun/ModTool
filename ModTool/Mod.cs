@@ -148,10 +148,13 @@ namespace ModTool
             string modDirectory = Path.GetDirectoryName(modInfo.path);
             string platformDirectory = Path.Combine(modDirectory, Application.platform.GetModPlatform().ToString());
 
+            Debug.Log("modDirectory: " + modDirectory);
+            Debug.Log("platformDirectory: " + platformDirectory);
+
             assemblyResource = new AssemblyResource(name + " Assemblies", modDirectory);
 
-            assetsResource = new AssetBundleResource(name + " Assets", Path.Combine(platformDirectory, name + ".assets"));
-            scenesResource = new AssetBundleResource(name + " Scenes", Path.Combine(platformDirectory, name + ".scenes"));            
+            assetsResource = new AssetBundleResource(name + " Assets", Path.Combine(platformDirectory, name.ToLower() + ".assets"));
+            scenesResource = new AssetBundleResource(name + " Scenes", Path.Combine(platformDirectory, name.ToLower() + ".scenes"));            
 
             assetPaths = assetsResource.assetPaths;
             sceneNames = scenesResource.assetPaths;

@@ -581,6 +581,7 @@ namespace ModTool.Editor.Exporting
 
             foreach (BuildTarget buildTarget in buildTargets)
             {
+                Debug.Log("Building: " + Path.Combine(tempModDirectory, buildTarget.GetModPlatform().ToString())+" for "+ buildTarget.ToString()+" | "+ buildTarget.GetModPlatform());
                 string platformSubdirectory = Path.Combine(tempModDirectory, buildTarget.GetModPlatform().ToString());
                 Directory.CreateDirectory(platformSubdirectory);
                 BuildPipeline.BuildAssetBundles(platformSubdirectory, BuildAssetBundleOptions.None, buildTarget);

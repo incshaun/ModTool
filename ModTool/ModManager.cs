@@ -66,7 +66,7 @@ namespace ModTool
             refreshQueue = new List<Mod>();
             searchDirectories = new List<ModSearchDirectory>();
 
-            if (Application.platform == RuntimePlatform.Android)
+            if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
                 defaultSearchDirectory = Path.Combine(Application.persistentDataPath, "Mods");       
             else
                 defaultSearchDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Mods");

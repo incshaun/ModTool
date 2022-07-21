@@ -9,7 +9,7 @@ namespace ModTool.Shared
     /// </summary>
     [Flags]
     [Serializable]
-    public enum ModPlatform { Windows = 1, Linux = 2, OSX = 4, Android = 8 }
+    public enum ModPlatform { Windows = 1, Linux = 2, OSX = 4, Android = 8, iPhone = 16 }
 
     /// <summary>
     /// Extension methods for ModPlatform.
@@ -50,6 +50,10 @@ namespace ModTool.Shared
                     if ((self & ModPlatform.Android) == ModPlatform.Android)
                         return true;
                     break;
+                case RuntimePlatform.IPhonePlayer:
+                    if ((self & ModPlatform.iPhone) == ModPlatform.iPhone)
+                        return true;
+                    break;
             }
 
             return false;
@@ -75,7 +79,9 @@ namespace ModTool.Shared
                 case RuntimePlatform.OSXEditor:
                     return ModPlatform.OSX;
                 case RuntimePlatform.Android:
-                    return ModPlatform.Android;                    
+                    return ModPlatform.Android;
+                case RuntimePlatform.IPhonePlayer:
+                    return ModPlatform.iPhone;
             }
 
             return 0;

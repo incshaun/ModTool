@@ -53,10 +53,10 @@ namespace ModTool
         private void CheckFiles()
         {
             if (!File.Exists(path))            
-                AddError(name + " asset bundle is missing");             
+                AddError(name + " asset bundle is missing from: "+path);             
 
             if (!File.Exists(manifestPath))            
-                AddError(name + " manifest is missing");
+                AddError(name + " manifest is missing from: "+manifestPath);
         }
 
         private void GetAssetPaths()

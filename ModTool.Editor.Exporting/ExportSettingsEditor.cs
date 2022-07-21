@@ -49,7 +49,22 @@ namespace ModTool.Editor.Exporting
             GUILayout.Space(5);
 
             _platforms.intValue = platforms.DoMaskField("Platforms*:", _platforms.intValue);
-            _content.intValue = content.DoMaskField("Content*:", _content.intValue);
+            //_content.intValue = content.DoMaskField("Content*:", _content.intValue);
+
+            var disp_content = (ModContent.Scenes | ModContent.Assets);
+
+            if ((_platforms.enumValueFlag & ((int)ModPlatform.iPhone)) != 0 || (_platforms.enumValueFlag & ((int)ModPlatform.Android)) != 0){
+                disp_content = (ModContent.Scenes | ModContent.Assets);
+            }
+            else
+            {
+                disp_content = (ModContent.Scenes | ModContent.Assets | ModContent.Code);
+            }
+
+            _content.intValue = ((int)disp_content);
+
+            EditorGUILayout.LabelField("Content: ", disp_content.ToString()+" | "+ _content.intValue);
+
             ModToolSettings.logLevel = (LogLevel)EditorGUILayout.EnumPopup("Log Level:", ModToolSettings.logLevel);
 
             bool enabled = GUI.enabled;
