@@ -1,3 +1,6 @@
+Version 2.1:
+This version allows for iPhone support and better mobile support by using uncompressed AssetBundles
+
 Version 2.0:
 This version brings many breaking changes. Redundant features have been removed and most other features have been completely reworked.
 -Added shared assets

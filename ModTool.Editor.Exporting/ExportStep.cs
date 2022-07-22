@@ -584,7 +584,7 @@ namespace ModTool.Editor.Exporting
                 Debug.Log("Building: " + Path.Combine(tempModDirectory, buildTarget.GetModPlatform().ToString())+" for "+ buildTarget.ToString()+" | "+ buildTarget.GetModPlatform());
                 string platformSubdirectory = Path.Combine(tempModDirectory, buildTarget.GetModPlatform().ToString());
                 Directory.CreateDirectory(platformSubdirectory);
-                BuildPipeline.BuildAssetBundles(platformSubdirectory, BuildAssetBundleOptions.None, buildTarget);
+                BuildPipeline.BuildAssetBundles(platformSubdirectory, BuildAssetBundleOptions.UncompressedAssetBundle, buildTarget);
             }
         }
 
