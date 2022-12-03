@@ -11,7 +11,7 @@ See the included examples and the [Documentation](http://hellomeow.net/modtool/d
 - Let modders use the Unity editor to create scenes, prefabs and code for your game
 - Scripts and assemblies are fully supported
 - Code validation
-- Supports Windows, OS X, Linux and Android
+- Supports Windows, OS X, Linux, Android, and iOS
 - Mod conflict detection
 - Automatic Mod discovery
 - Asynchronous discovery and loading of mods
