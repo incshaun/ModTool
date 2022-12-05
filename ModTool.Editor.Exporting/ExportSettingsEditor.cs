@@ -145,7 +145,7 @@ namespace ModTool.Editor.Exporting
 
                         int prev_compression_value = _compression.GetArrayElementAtIndex(i).intValue;
                         int new_compression_value = compressions[i].DoMaskField("", prev_compression_value);
-                        if (new_compression_value != prev_compression_value)
+                        if (new_compression_value != prev_compression_value || prev_compression_value <= 0 || prev_compression_value > (int)ModCompression.LZMA)
                         {
                             new_compression_value &= ~prev_compression_value;
                             if (new_compression_value <= 0 || new_compression_value > (int)ModCompression.LZMA)

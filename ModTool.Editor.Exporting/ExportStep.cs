@@ -576,7 +576,7 @@ namespace ModTool.Editor.Exporting
         public override string message { get { return "Exporting Files"; } }
 
         private string modDirectory;
-        
+
         internal override void Execute(ExportData data)
         {
             modDirectory = Path.Combine(ExportSettings.outputDirectory, ExportSettings.name);
@@ -584,15 +584,28 @@ namespace ModTool.Editor.Exporting
             BuildAssetBundles(data);
 
             bool content_has_code = false;
-            for(int i=0; i < data.export_content.Count; i++)
+            ModPlatform all_platforms = 0;
+            for (int i = 0; i < data.export_content.Count; i++)
             {
                 if ((data.export_content[i] & ModContent.Code) == ModContent.Code)
                 {
                     content_has_code = true;
-                    break;
+                }
+
+                if(data.export_content[i] > 0)
+                {
+                    all_platforms |= data.export_platforms[i];
                 }
             }
-            File.Delete(Path.Combine(tempModDirectory, ExportSettings.name.Replace(" ", "") + ".dll"));
+
+            if (content_has_code)
+            {
+                File.Delete(Path.Combine(tempModDirectory, ExportSettings.name.Replace(" ", "") + ".dll"));
+            }
+
+            string json = "{\n\t\"_name\": \"" + ExportSettings.name + "\",\n\t\"_platforms\": " + (int)all_platforms + "\n}";
+
+            File.WriteAllText(Path.Combine(tempModDirectory, ExportSettings.name + ".rootinfo"), json);
 
             CopyToOutput();
         }
