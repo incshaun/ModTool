@@ -27,3 +27,16 @@ See the included examples and the [Documentation](http://hellomeow.net/modtool/d
 ## Acknowledgments
 
 - [Mono.Cecil](https://github.com/jbevain/cecil) by Jb Evain
+
+## How to build
+
+- Open ModTool.sln in Visual Studio
+- Add Unity .dll References to the individual PROJECTS not the solution
+  - Project > Add Reference > Browse > Click "Browse..." (bottom right) 
+  - Find your installed Unity Editor .exe location (ex: C:\Program Files\Unity\Hub\Editor\2019.2.12f1\Editor\)
+  - Add the following:
+    - UnityEngine.AssetBundleModule.dll
+    - UnityEngine.CoreModule.dll
+    - UnityEngine.dll
+    - UnityEditor.dll
+- At the top Build > Build Solution
