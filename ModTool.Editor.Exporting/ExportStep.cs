@@ -102,9 +102,6 @@ namespace ModTool.Editor.Exporting
 
             if (ExportSettings.platforms == 0)
                 throw new Exception("No platforms selected");
-
-            if (ExportSettings.content == 0)
-                throw new Exception("No content selected");
         }
 
         [MenuItem("Tools/ModTool/Verify")]
@@ -156,27 +153,75 @@ namespace ModTool.Editor.Exporting
         }        
     }
 
+    public class SetupDataSettings : ExportStep
+    {
+        public override string message => "ExportData settings setup";
+
+        internal override void Execute(ExportData data)
+        {
+            data.export_platforms.Clear();
+            data.export_content.Clear();
+            data.export_compression.Clear();
+
+            ModPlatform[] all_platforms = new ModPlatform[] { ModPlatform.Windows, ModPlatform.Linux, ModPlatform.OSX, ModPlatform.Android, ModPlatform.iPhone };
+
+            bool has_all_valid_platforms = true;
+            
+            for(int i=0; i < all_platforms.Length; i++) {
+                ModPlatform p = all_platforms[i];
+                if ((ExportSettings.platforms & p) == p)
+                {
+                    data.export_platforms.Add(p);
+                    data.export_content.Add((ModContent)ExportSettings.content[i]);
+
+                    if(data.export_content[data.export_content.Count - 1] == 0)
+                    {
+                        has_all_valid_platforms = false;
+                    }
+
+                    data.export_compression.Add((ModCompression)ExportSettings.compression[i]);
+                }
+            }
+
+            if(data.export_platforms.Count <= 0)
+                throw new Exception("You have no platforms selected");
+
+            if (has_all_valid_platforms == false)
+                throw new Exception("You have platforms with no content");
+
+        }
+    }
+
     public class CreateAssemblies : ExportStep
     {
         public override string message => "Creating Assemblies";
-
+        public List<ModPlatform> platforms_with_assemblies = new List<ModPlatform>();
         internal override void Execute(ExportData data)
-        {            
-            if ((ExportSettings.content & ModContent.Code) != ModContent.Code)
-                return;
+        {
+            platforms_with_assemblies.Clear();
+            for (int i = 0; i < data.export_platforms.Count; i++)
+            {
+                if ((data.export_content[i] & ModContent.Code) == ModContent.Code)
+                {
+                    platforms_with_assemblies.Add(data.export_platforms[i]);
+                }
+            }
 
-            //Note: already a top-level Assembly Definition present
-            if (Directory.GetFiles("Assets", "*.asmdef").Length > 0)
-                return;
+            if (platforms_with_assemblies.Count > 0)
+            {
+                //Note: already a top-level Assembly Definition present
+                if (Directory.GetFiles("Assets", "*.asmdef").Length > 0)
+                    return;
 
-            //Note: no mod scripts exist without associated Assembly Definition
-            if (!File.Exists(Path.Combine(assemblyDirectory, "Assembly-CSharp.dll")))
-                return;
+                //Note: no mod scripts exist without associated Assembly Definition
+                if (!File.Exists(Path.Combine(assemblyDirectory, "Assembly-CSharp.dll")))
+                    return;
 
-            CreateScriptAssembly(data);
-            CreateEditorAssemblies(data);
+                CreateScriptAssembly(data);
+                CreateEditorAssemblies(data);
 
-            ForceAssemblyReload();
+                ForceAssemblyReload();
+            }
         }
 
         private void CreateScriptAssembly(ExportData data)
@@ -280,24 +325,28 @@ namespace ModTool.Editor.Exporting
 
         internal override void Execute(ExportData data)
         {
-            if ((ExportSettings.content & ModContent.Code) == ModContent.Code)                
-                data.assemblies = GetAssemblies();
-
+            data.assemblies = GetAssemblies();
             data.assets = GetAssets("t:prefab t:scriptableobject");
             data.scenes = GetAssets("t:scene");
 
+
             //TODO: add other asset types like TextAsset?
-
-            ModContent content = ExportSettings.content;
-
-            if (data.assets.Count == 0)
-                content &= ~ModContent.Assets;
-            if (data.scenes.Count == 0)
-                content &= ~ModContent.Scenes;
-            if (data.assemblies.Count == 0)
-                content &= ~ModContent.Code;
-
-            data.content = content;
+            for(int i=0; i < data.export_platforms.Count; i++)
+            {
+                ModContent content = data.export_content[i];
+                if (data.assets.Count == 0)
+                {
+                    content &= ~ModContent.Assets;
+                }
+                if (data.scenes.Count == 0)
+                {
+                    content &= ~ModContent.Scenes;
+                }
+                if (data.assemblies.Count == 0) {
+                    content &= ~ModContent.Code;
+                }
+                data.export_content[i] = content;
+            }
         }
 
         private List<Asset> GetAssets(string filter)
@@ -378,31 +427,6 @@ namespace ModTool.Editor.Exporting
                 scene.Backup();
         }
     }
-    
-    public class UpdateAssets : ExportStep
-    {
-        public override string message => "Updating Assets";
-
-        internal override void Execute(ExportData data)
-        {
-            string modName = ExportSettings.name;
-
-            if ((data.content & ModContent.Assets) == ModContent.Assets)
-            {
-                foreach (Asset asset in data.assets)
-                    asset.SetAssetBundle(modName, "assets");
-            }
-
-            if ((data.content & ModContent.Scenes) == ModContent.Scenes)
-            {
-                foreach (Asset scene in data.scenes)
-                {
-                    scene.name = modName + "-" + scene.name;
-                    scene.SetAssetBundle(modName, "scenes");
-                }
-            }
-        }
-    }
 
     public class UpdateAssemblies : ExportStep
     {
@@ -419,12 +443,12 @@ namespace ModTool.Editor.Exporting
             //Note: replaces all method calls that create new Objects to version that keeps track of Objects.
 
             modName = ExportSettings.name;
-            
+
             CreateReferences();
 
             var assemblyResolver = new AssemblyResolver();
 
-            foreach(var assembly in data.assemblies)
+            foreach (var assembly in data.assemblies)
             {
                 var assemblyDefinition = AssemblyDefinition.ReadAssembly(assembly.assetPath, new ReaderParameters { InMemory = true, AssemblyResolver = assemblyResolver });
 
@@ -556,36 +580,97 @@ namespace ModTool.Editor.Exporting
         internal override void Execute(ExportData data)
         {
             modDirectory = Path.Combine(ExportSettings.outputDirectory, ExportSettings.name);
-                        
-            ModPlatform platforms = ExportSettings.platforms;
 
-            BuildAssetBundles(platforms);
+            BuildAssetBundles(data);
 
-            ModInfo modInfo = new ModInfo(
-                ExportSettings.name,
-                ExportSettings.author,
-                ExportSettings.description,
-                ExportSettings.version,
-                Application.unityVersion,
-                platforms,
-                data.content);
-
-            ModInfo.Save(Path.Combine(tempModDirectory, ExportSettings.name + ".info"), modInfo);
+            bool content_has_code = false;
+            for(int i=0; i < data.export_content.Count; i++)
+            {
+                if ((data.export_content[i] & ModContent.Code) == ModContent.Code)
+                {
+                    content_has_code = true;
+                    break;
+                }
+            }
+            File.Delete(Path.Combine(tempModDirectory, ExportSettings.name.Replace(" ", "") + ".dll"));
 
             CopyToOutput();
         }
 
-        private void BuildAssetBundles(ModPlatform platforms)
+        private void AdjustAssetBundleInclusions(ExportData data, int platform_index)
         {
-            List<BuildTarget> buildTargets = platforms.GetBuildTargets();
+            string modName = ExportSettings.name;
 
-            foreach (BuildTarget buildTarget in buildTargets)
+            bool include_assets = ((data.export_content[platform_index] & ModContent.Assets) == ModContent.Assets);
+
+            foreach (Asset asset in data.assets)
             {
-                Debug.Log("Building: " + Path.Combine(tempModDirectory, buildTarget.GetModPlatform().ToString())+" for "+ buildTarget.ToString()+" | "+ buildTarget.GetModPlatform());
-                string platformSubdirectory = Path.Combine(tempModDirectory, buildTarget.GetModPlatform().ToString());
-                Directory.CreateDirectory(platformSubdirectory);
-                BuildPipeline.BuildAssetBundles(platformSubdirectory, BuildAssetBundleOptions.UncompressedAssetBundle, buildTarget);
+                if (include_assets)
+                {
+                    asset.SetAssetBundle(modName, "assets");
+                }
+                else
+                {
+                    asset.RemoveFromAssetBundle();
+                }
             }
+
+
+            bool include_scenes = ((data.export_content[platform_index] & ModContent.Scenes) == ModContent.Scenes);
+            foreach (Asset scene in data.scenes)
+            {
+                if (include_scenes)
+                {
+                    scene.name = modName + "-" + scene.original_name;
+                    scene.SetAssetBundle(modName, "scenes");
+                }
+                else
+                {
+                    scene.name = scene.original_name;
+                    scene.RemoveFromAssetBundle();
+                }
+            }
+        }
+
+        private void BuildAssetBundles(ExportData data)
+        {
+            Dictionary<ModCompression, BuildAssetBundleOptions> compression_dict = new Dictionary<ModCompression, BuildAssetBundleOptions>()
+            {
+                { ModCompression.Uncompressed, BuildAssetBundleOptions.UncompressedAssetBundle },
+                { ModCompression.LZ4, BuildAssetBundleOptions.ChunkBasedCompression },
+                { ModCompression.LZMA, BuildAssetBundleOptions.None }
+            };
+
+            for(int i=0; i < data.export_platforms.Count; i++)
+            {
+
+                BuildTarget buildTarget = data.export_platforms[i].GetBuildTargets()[0];
+
+                string platformSubdirectory = Path.Combine(tempModDirectory, data.export_platforms[i].ToString(), data.export_platforms[i].ToString());
+                Directory.CreateDirectory(platformSubdirectory);
+
+                ModInfo modInfo = new ModInfo(
+                    ExportSettings.name,
+                    ExportSettings.author,
+                    ExportSettings.description,
+                    ExportSettings.version,
+                    Application.unityVersion,
+                    data.export_platforms[i],
+                    data.export_content[i]
+                );
+
+                ModInfo.Save(Path.Combine(tempModDirectory, data.export_platforms[i].ToString(), ExportSettings.name + ".info"), modInfo);
+
+                AdjustAssetBundleInclusions(data, i);
+
+                BuildPipeline.BuildAssetBundles(platformSubdirectory, compression_dict[data.export_compression[i]], buildTarget);
+
+                if((data.export_content[i] & ModContent.Code) == ModContent.Code)
+                {
+                    File.Copy(Path.Combine(tempModDirectory, ExportSettings.name.Replace(" ", "")+".dll"), Path.Combine(tempModDirectory, data.export_platforms[i].ToString(), ExportSettings.name.Replace(" ", "") + ".dll"), true);
+                }
+            }
+
         }
 
         private void CopyToOutput()
@@ -628,7 +713,9 @@ namespace ModTool.Editor.Exporting
                     continue;
 
                 if (fileName.EndsWith(".dll") || fileName == modName + ".info")
+                {
                     File.Delete(file);
+                }
             }
         }        
 

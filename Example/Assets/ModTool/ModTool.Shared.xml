@@ -120,6 +120,11 @@
             <param name="self"></param>
             <returns></returns>
         </member>
+        <member name="T:ModTool.Shared.ModCompression">
+            <summary>
+            Represents a compression method or a combination of compression methods.
+            </summary>
+        </member>
         <member name="T:ModTool.Shared.ModContent">
             <summary>
             Flags for different types of content that can be included in a Mod. 
@@ -261,6 +266,16 @@
         <member name="P:ModTool.Shared.ModToolSettings.supportedContent">
             <summary>
             The types of content that are supported for the project.
+            </summary>
+        </member>
+        <member name="P:ModTool.Shared.ModToolSettings.supportedCompression">
+            <summary>
+            The types of compression that are supported for the project.
+            </summary>
+        </member>
+        <member name="P:ModTool.Shared.ModToolSettings.settingsLocked">
+            <summary>
+            Are users allowed to edit what the final bundle includes (within your allowed settings).
             </summary>
         </member>
         <member name="P:ModTool.Shared.ModToolSettings.logLevel">

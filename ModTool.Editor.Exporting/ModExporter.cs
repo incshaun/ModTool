@@ -37,11 +37,11 @@ namespace ModTool.Editor.Exporting
         {
             new StartExport(),
             new Verify(),
+            new SetupDataSettings(),
             new CreateAssemblies(),
             new GetContent(),            
             new CreateBackup(),
             new UpdateAssemblies(),
-            new UpdateAssets(),
             new Export(),
         };
 

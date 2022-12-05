@@ -14,16 +14,26 @@ namespace ModTool.Editor.Exporting
         {
             get
             {
+                if(original_name == "" || original_name == null)
+                {
+                    original_name = Path.GetFileNameWithoutExtension(assetPath);
+                }
                 return Path.GetFileNameWithoutExtension(assetPath);
             }
             set
             {
+                if (original_name == "" || original_name == null)
+                {
+                    original_name = Path.GetFileNameWithoutExtension(assetPath);
+                }
                 string result = AssetDatabase.RenameAsset(assetPath, value);
 
                 if (string.IsNullOrEmpty(result))
                     _assetPath = Path.Combine(Path.GetDirectoryName(assetPath), value + Path.GetExtension(assetPath));
             }
         }
+
+        public string original_name = "";
 
         public string assetPath
         {
@@ -96,14 +106,34 @@ namespace ModTool.Editor.Exporting
             File.Copy(backupPath + ".meta", assetPath + ".meta", true);
         }
 
+        private bool setNone = false;
+        private string assetBundleNone = null;
+        private string assetBundleVariantNone = null;
         public void SetAssetBundle(string assetBundleName, string assetBundleVariant = "")
         {
             AssetImporter importer = AssetImporter.GetAtPath(assetPath);
+
+            if(setNone == false)
+            {
+                setNone = true;
+                assetBundleNone = importer.assetBundleName;
+                assetBundleVariantNone = importer.assetBundleVariant;
+            }
 
             importer.assetBundleName = assetBundleName;
 
             if (!string.IsNullOrEmpty(assetBundleName))
                 importer.assetBundleVariant = assetBundleVariant;
+        }
+
+        public void RemoveFromAssetBundle()
+        {
+            if (setNone)
+            {
+                AssetImporter importer = AssetImporter.GetAtPath(assetPath);
+                importer.assetBundleVariant = assetBundleVariantNone;
+                importer.assetBundleName = assetBundleNone;
+            }
         }
         
         public void Delete()

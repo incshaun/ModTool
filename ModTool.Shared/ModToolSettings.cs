@@ -44,11 +44,33 @@ namespace ModTool.Shared
         /// <summary>
         /// The types of content that are supported for the project.
         /// </summary>
-        public static ModContent supportedContent
+        public static int[] supportedContent
         {
             get
             {
                 return instance._supportedContent;
+            }
+        }
+
+        /// <summary>
+        /// The types of compression that are supported for the project.
+        /// </summary>
+        public static int[] supportedCompression
+        {
+            get
+            {
+                return instance._supportedCompression;
+            }
+        }
+
+        /// <summary>
+        /// Are users allowed to edit what the final bundle includes (within your allowed settings).
+        /// </summary>
+        public static bool[] settingsLocked
+        {
+            get
+            {
+                return instance._settingsLocked;
             }
         }
 
@@ -100,11 +122,19 @@ namespace ModTool.Shared
         
         [HideInInspector]
         [SerializeField]
-        private ModPlatform _supportedPlatforms = ModPlatform.iPhone | ModPlatform.Android | ModPlatform.Linux | ModPlatform.OSX | ModPlatform.Windows;
+        private ModPlatform _supportedPlatforms = ModPlatform.iPhone | ModPlatform.Android | ModPlatform.OSX | ModPlatform.Linux | ModPlatform.Windows;
 
         [HideInInspector]
         [SerializeField]
-        private ModContent _supportedContent = ModContent.Code | ModContent.Assets | ModContent.Scenes;
+        private int[] _supportedContent = new int[] { 0, 0, 0, 0, 0 };
+
+        [HideInInspector]
+        [SerializeField]
+        private int[] _supportedCompression = new int[] { 2, 2, 2, 2, 2 };
+
+        [HideInInspector]
+        [SerializeField]
+        private bool[] _settingsLocked = new bool[] { false, false, false, false, false };
 
         [HideInInspector]
         [SerializeField]

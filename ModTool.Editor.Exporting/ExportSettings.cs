@@ -86,7 +86,7 @@ namespace ModTool.Editor.Exporting
         /// <summary>
         /// The selected content types that will be exported.
         /// </summary>
-        public static ModContent content
+        public static int[] content
         {
             get
             {
@@ -97,7 +97,37 @@ namespace ModTool.Editor.Exporting
                 instance._content = value;
             }
         }
-        
+
+        /// <summary>
+        /// The selected compression types that will be exported.
+        /// </summary>
+        public static int[] compression
+        {
+            get
+            {
+                return instance._compression;
+            }
+            set
+            {
+                instance._compression = value;
+            }
+        }
+
+        /// <summary>
+        /// The selected lock types that will be exported.
+        /// </summary>
+        public static int[] locked
+        {
+            get
+            {
+                return instance._locked;
+            }
+            set
+            {
+                instance._locked = value;
+            }
+        }
+
         /// <summary>
         /// The directory to which the Mod will be exported.
         /// </summary>
@@ -110,6 +140,36 @@ namespace ModTool.Editor.Exporting
             set
             {
                 instance._outputDirectory = value;
+            }
+        }
+
+        /// <summary>
+        /// The platform content matrix that is saved to the object.
+        /// </summary>
+        public static bool[] platform_content_matrixSAVE
+        {
+            get
+            {
+                return instance._platform_content_matrixSAVE;
+            }
+            set
+            {
+                instance._platform_content_matrixSAVE = value;
+            }
+        }
+
+        /// <summary>
+        /// The platform content that is saved to the object.
+        /// </summary>
+        public static ModContent[] platform_contentSAVE
+        {
+            get
+            {
+                return instance._platform_contentSAVE;
+            }
+            set
+            {
+                instance._platform_contentSAVE = value;
             }
         }
 
@@ -129,9 +189,27 @@ namespace ModTool.Editor.Exporting
         private ModPlatform _platforms = (ModPlatform)(-1);
 
         [SerializeField]
-        private ModContent _content = (ModContent)(-1);
+        private int[] _content = new int[] { 0, 0, 0, 0, 0 };
+
+        [SerializeField]
+        private int[] _compression = new int[] { 0, 0, 0, 0, 0 };
+
+        [SerializeField]
+        private int[] _locked = new int[] { 0, 0, 0, 0, 0 };
 
         [SerializeField]
         private string _outputDirectory;
+
+        [SerializeField]
+        private bool[] _platform_content_matrixSAVE = new bool[] {
+                                                      false, false, false, //Windows - Scene, Asset, Code
+                                                      false, false, false, //Linux - Scene, Asset, Code
+                                                      false, false, false, //OSX - Scene, Asset, Code
+                                                      false, false, false, //Android - Scene, Asset, Code
+                                                      false, false, false  //iPhone - Scene, Asset, Code
+        };
+
+        [SerializeField]
+        private ModContent[] _platform_contentSAVE = new ModContent[] { 0, 0, 0, 0, 0 };
     }
 }

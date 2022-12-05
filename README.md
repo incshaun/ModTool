@@ -12,6 +12,7 @@ See the included examples and the [Documentation](http://hellomeow.net/modtool/d
 - Scripts and assemblies are fully supported
 - Code validation
 - Supports Windows, OS X, Linux, Android, and iOS
+- Modular per platform settings
 - Mod conflict detection
 - Automatic Mod discovery
 - Asynchronous discovery and loading of mods

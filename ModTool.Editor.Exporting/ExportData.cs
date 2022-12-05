@@ -10,6 +10,13 @@ namespace ModTool.Editor.Exporting
     [Serializable]
     public class ExportData
     {
+        //This would be better with a dictionary BUT it's an unserialized type by unity so it gets dropped at some point during the build process and you end up losing all data during a step
+        public List<ModPlatform> export_platforms = new List<ModPlatform>();
+
+        public List<ModContent> export_content = new List<ModContent>();
+
+        public List<ModCompression> export_compression = new List<ModCompression>();
+
         public List<Asset> assemblyDefinitions = new List<Asset>();
 
         public List<Asset> assemblies = new List<Asset>();
@@ -18,7 +25,6 @@ namespace ModTool.Editor.Exporting
 
         public List<Asset> scenes = new List<Asset>();
 
-        public ModContent content = 0;
 
         public string loadedScene;
     }

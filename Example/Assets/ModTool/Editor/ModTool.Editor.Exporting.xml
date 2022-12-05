@@ -71,9 +71,29 @@
             The selected content types that will be exported.
             </summary>
         </member>
+        <member name="P:ModTool.Editor.Exporting.ExportSettings.compression">
+            <summary>
+            The selected compression types that will be exported.
+            </summary>
+        </member>
+        <member name="P:ModTool.Editor.Exporting.ExportSettings.locked">
+            <summary>
+            The selected lock types that will be exported.
+            </summary>
+        </member>
         <member name="P:ModTool.Editor.Exporting.ExportSettings.outputDirectory">
             <summary>
             The directory to which the Mod will be exported.
+            </summary>
+        </member>
+        <member name="P:ModTool.Editor.Exporting.ExportSettings.platform_content_matrixSAVE">
+            <summary>
+            The platform content matrix that is saved to the object.
+            </summary>
+        </member>
+        <member name="P:ModTool.Editor.Exporting.ExportSettings.platform_contentSAVE">
+            <summary>
+            The platform content that is saved to the object.
             </summary>
         </member>
         <member name="T:ModTool.Editor.Exporting.ModExporter">

@@ -25,8 +25,7 @@ namespace ModTool.Editor
         {
             SettingsEditorWindow window = GetWindow<SettingsEditorWindow>();
 
-            window.maxSize = new Vector2(385f, 255);
-            window.minSize = new Vector2(300f, 162);
+            window.minSize = new Vector2(680f, 450f);
             window.titleContent = new GUIContent("ModTool Settings");
         }
 

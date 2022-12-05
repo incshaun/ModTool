@@ -11,8 +11,7 @@ namespace ModTool.Editor.Exporting
         public static void ShowWindow()
         {
             ExporterEditorWindow window = GetWindow<ExporterEditorWindow>();
-            window.maxSize = new Vector2(385f, 265);
-            window.minSize = new Vector2(300f, 265);
+            window.minSize = new Vector2(400f, 300f);
             window.titleContent = new GUIContent("Mod Exporter");
         }
 
