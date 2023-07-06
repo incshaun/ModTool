@@ -38,6 +38,10 @@ namespace ModTool.Shared
                     if ((self & ModPlatform.Linux) == ModPlatform.Linux)
                         return true;
                     break;
+                case RuntimePlatform.LinuxEditor:
+                    if ((self & ModPlatform.Linux) == ModPlatform.Linux)
+                        return true;
+                    break;
                 case RuntimePlatform.OSXPlayer:
                     if ((self & ModPlatform.OSX) == ModPlatform.OSX)
                         return true;
@@ -73,6 +77,8 @@ namespace ModTool.Shared
                 case RuntimePlatform.WindowsEditor:
                     return ModPlatform.Windows;
                 case RuntimePlatform.LinuxPlayer:
+                    return ModPlatform.Linux;
+                case RuntimePlatform.LinuxEditor:
                     return ModPlatform.Linux;
                 case RuntimePlatform.OSXPlayer:
                     return ModPlatform.OSX;
