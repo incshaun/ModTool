@@ -210,6 +210,14 @@ namespace ModTool.Shared
             }
 
             return null;
-        }        
-    }        
+        }     
+
+                // Expects to find ModTool in a defined location.
+        public static string modToolDirectory ()
+        {
+            return Path.Combine("Assets", "ModTool");
+        }
+    }       
+    
+     
 }

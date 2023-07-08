@@ -6,7 +6,7 @@ using UnityEngine;
 namespace ModTool.Shared
 {
     /// <summary>
-    /// A singleton class for ScriptableObjecs, which stores itself as an asset in a Resources folder.
+    /// A singleton class for ScriptableObjects, which stores itself as an asset in a Resources folder.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public abstract class Singleton<T> : ScriptableObject where T : Singleton<T>
@@ -46,10 +46,11 @@ namespace ModTool.Shared
         
         private static void CreateAsset()
         {
-            string modToolDirectory = Path.GetDirectoryName(typeof(ModInfo).Assembly.Location);
-            string resourcesDirectory = Path.Combine(modToolDirectory, "Resources");
+//             string modToolDirectory = Path.GetDirectoryName(typeof(ModInfo).Assembly.Location);
+//             string resourcesDirectory = Path.Combine(modToolDirectory, "Resources");
 
-            resourcesDirectory = resourcesDirectory.Substring(Application.dataPath.Length - 6);
+//             resourcesDirectory = resourcesDirectory.Substring(Application.dataPath.Length - 6);
+            string resourcesDirectory = Path.Combine (ModInfo.modToolDirectory (), "Resources");
 
             if (Directory.Exists(resourcesDirectory))
                 Directory.CreateDirectory(resourcesDirectory);
@@ -64,6 +65,6 @@ namespace ModTool.Shared
             MethodInfo method = type.GetMethod("CreateAsset", BindingFlags.Public | BindingFlags.Static);
 
             method.Invoke(null, new object[] { _instance, assetPath });
-        }
+        }        
     }
 }
