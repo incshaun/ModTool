@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+
+using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 namespace ModTool
 {
@@ -35,8 +40,7 @@ namespace ModTool
 
         private Dictionary<string, long> _modPaths;
 
-        private Thread backgroundRefresh;
-        private AutoResetEvent refreshEvent;
+        private bool refreshEvent;
         private bool disposed;
 
         /// <summary>
@@ -45,17 +49,24 @@ namespace ModTool
         /// <param name="path">The path to the search directory.</param>
         public ModSearchDirectory(string path)
         {
-            this.path = Path.GetFullPath(path);
+            if (!path.StartsWith ("http"))
+            {
+              this.path = Path.GetFullPath(path);
+            
 
-            if (!Directory.Exists(this.path))            
-                throw new DirectoryNotFoundException(this.path);            
-
+                if (!Directory.Exists(this.path))            
+                    throw new DirectoryNotFoundException(this.path);            
+            }
+            else
+            {
+                this.path = path;
+            }
+            
             _modPaths = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
 
-            refreshEvent = new AutoResetEvent(false);
+            refreshEvent = false;
 
-            backgroundRefresh = new Thread(BackgroundRefresh);
-            backgroundRefresh.Start();
+            DirectorySearch._StartCoroutine(BackgroundRefresh ());
         }
 
         /// <summary>
@@ -63,80 +74,77 @@ namespace ModTool
         /// </summary>
         public void Refresh()
         {
-            refreshEvent.Set();
+            refreshEvent = true;
         }
 
-        private void BackgroundRefresh()
+        private IEnumerator BackgroundRefresh()
         {
-            Thread.CurrentThread.IsBackground = true;
-
-            refreshEvent.WaitOne();
+            yield return new WaitUntil (() => refreshEvent);
+            refreshEvent = false;
 
             while(!disposed)
             {
-                DoRefresh();
+                yield return DoRefresh();
 
-                refreshEvent.WaitOne();
+                yield return new WaitUntil (() => refreshEvent);
+                refreshEvent = false;
             }
+            
+            yield return null;
         }
 
-        private void DoRefresh()
+        private IEnumerator DoRefresh()
         {
             bool changed = false;            
 
-            string[] modInfoPaths = GetModInfoPaths();
-
+            // ModCurrentPaths contains the latest view of any files.
+            Dictionary<string, long> modCurrentPaths = null;
+            yield return DirectorySearch._StartCoroutine (GetModPaths((r) => { modCurrentPaths = r; }, ""));
+            
+            // _ModPaths contains the previous view of any info files.
+            // Scan for changes, and signal where differences exist.            
             foreach (string path in _modPaths.Keys.ToArray())
             {
-                if (!modInfoPaths.Contains(path))
+                // Remove any files in previous that no longer exist in current.
+                if (!modCurrentPaths.Keys.Contains(path))
                 {
                     changed = true;
                     RemoveModPath(path);
                     continue;
                 }
-
-                DirectoryInfo modDirectory = new DirectoryInfo(Path.GetDirectoryName(path));
-
-                long currentTicks = DateTime.Now.Ticks;
-                long lastWriteTime = _modPaths[path];
-
-                if (modDirectory.LastWriteTime.Ticks > lastWriteTime)
-                {
-                    changed = true;
-                    _modPaths[path] = currentTicks;
-                    UpdateModPath(path);
-                    continue;
-                }
-
-                foreach (DirectoryInfo directory in modDirectory.GetDirectories("*", SearchOption.AllDirectories))
-                {
-                    if (directory.LastWriteTime.Ticks > lastWriteTime)
-                    {
-                        changed = true;
-                        _modPaths[path] = currentTicks;
-                        UpdateModPath(path);
-                        break;
-                    }
-                }
-
-                foreach (FileInfo file in modDirectory.GetFiles("*", SearchOption.AllDirectories))
-                {
-                    if (file.Extension == ".info")
-                        continue;
-
-                    if (file.LastWriteTime.Ticks > lastWriteTime)
-                    {
-                        changed = true;
-                        _modPaths[path] = currentTicks;
-                        UpdateModPath(path);
-                        break;
-                    }
-                }
             }
 
-            foreach (string path in modInfoPaths)
+            foreach (string path in modCurrentPaths.Keys)
             {
-                if (!_modPaths.ContainsKey(path))
+                if (_modPaths.Keys.Contains (path))
+                {
+                    long lastWriteTime = _modPaths[path];
+
+                    // Update any files that have changed relative to previous.
+                    if (modCurrentPaths[path] > lastWriteTime)
+                    {
+                        changed = true;
+                        _modPaths[path] = modCurrentPaths[path];
+                        UpdateModPath(path);
+                        continue;
+                    }
+                }
+                
+                // Check if any files in the same directory are more recent.
+                foreach (string prevpath in _modPaths.Keys)
+                {
+                    string dirname = Path.GetDirectoryName (path);
+                    if (prevpath.StartsWith (dirname) && modCurrentPaths[path] > _modPaths[prevpath])
+                    {
+                        changed = true;
+                        _modPaths[path] = modCurrentPaths[path];
+                        UpdateModPath(path);
+                        break;
+                    }
+                }
+
+                // Add any new files.
+                if (!_modPaths.ContainsKey(path) && (path.EndsWith (".info")))
                 {
                     changed = true;
                     AddModPath(path);
@@ -145,6 +153,8 @@ namespace ModTool
 
             if (changed)
                 ModsChanged?.Invoke();
+            
+            yield return null;
         }
 
         private void AddModPath(string path)
@@ -176,10 +186,55 @@ namespace ModTool
 
             ModChanged?.Invoke(path);
         }
-                
-        private string[] GetModInfoPaths()
+             
+        class UnityTrustCertificate : CertificateHandler
         {
-            return Directory.GetFiles(path, "*.info", SearchOption.AllDirectories);
+            protected override bool ValidateCertificate(byte[] certificateData)
+            {
+                return true;
+            }
+        }
+                
+        private IEnumerator GetModPaths(System.Action<Dictionary<string, long>> callback, string endsWith)
+        {
+            if (path.StartsWith ("http"))
+            {
+                using (UnityWebRequest webRequest = UnityWebRequest.Get(Path.Combine (path, "FileList")))
+                {
+                    webRequest.certificateHandler = new UnityTrustCertificate ();
+                    yield return webRequest.SendWebRequest();
+                    if (webRequest.result == UnityWebRequest.Result.Success)
+                    {
+                        Dictionary<string, long> modpaths = new Dictionary<string, long> ();
+                        foreach (string path in webRequest.downloadHandler.text.Split (new [] { '\r', '\n' }).Select (x => Path.Combine (path, x)))
+                        {
+                            if (path.EndsWith (endsWith))
+                            {
+                              modpaths.Add (path, 1);
+                            }
+                        }
+                        callback (modpaths);
+                        yield break;
+                    }
+                }
+                callback (new Dictionary<string, long> ());
+            }
+            else
+            {
+                Dictionary<string, long> modpaths = new Dictionary<string, long> ();
+                string [] paths = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
+                paths = paths.Concat (Directory.GetDirectories(path, "*", SearchOption.AllDirectories)).ToArray ();
+                foreach (string path in paths)
+                {
+                    if (path.EndsWith (endsWith))
+                    {
+                      modpaths.Add (path, File.GetLastWriteTime (path).Ticks);
+                    }
+                }
+                callback (modpaths);
+            }
+            
+            yield return null;
         }
 
         /// <summary>
@@ -192,10 +247,23 @@ namespace ModTool
             ModChanged = null;
 
             disposed = true;
-            refreshEvent.Set();
-            backgroundRefresh.Join();
-
-            refreshEvent.Dispose();
+            refreshEvent = true;
+        }
+    }
+    
+    // A bit of a hack, to get coroutines running on a non-MonoBehaviour class. Relies on the scene having at
+    // least one object, and that object being active.
+    internal class DirectorySearch : MonoBehaviour
+    {
+        private static DirectorySearch searchComponent;
+        
+        public static Coroutine _StartCoroutine (IEnumerator iEnumerator)
+        {
+            if (searchComponent == null)
+            {
+              searchComponent = SceneManager.GetActiveScene ().GetRootGameObjects ()[0].AddComponent <DirectorySearch> ();
+            }
+            return searchComponent.StartCoroutine (iEnumerator);
         }
     }
 }
