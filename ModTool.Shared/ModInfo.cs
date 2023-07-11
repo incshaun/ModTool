@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using System.Linq;
+using System.Globalization;
 
 namespace ModTool.Shared
 {
@@ -252,7 +253,34 @@ namespace ModTool.Shared
 
         private static IEnumerator retrieveModFile (string sourcePath, string destPath)
         {
-            Debug.Log ("Mirroring " + sourcePath + " to " + destPath);
+            // Check if file already exists, and if it is more recent.
+            DateTime sourceTime = new DateTime ();
+            bool validSourceTime = false;
+            using (UnityWebRequest request = UnityWebRequest.Head (sourcePath))
+            {
+                request.certificateHandler = new UnityTrustCertificate ();
+                yield return request.SendWebRequest ();
+             
+                try 
+                {
+                    long sourceSize = Convert.ToInt64 (request.GetResponseHeader("Content-Length"));
+                    sourceTime = DateTime.ParseExact(request.GetResponseHeader("Last-Modified"), "ddd, dd MMM yyyy HH:mm:ss 'GMT'", CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AssumeUniversal);
+                    validSourceTime = true;
+                    long destSize = new FileInfo (destPath).Length;
+                    DateTime destTime = File.GetLastWriteTime (destPath);
+                    if (File.Exists (destPath) && (sourceTime == destTime) && (sourceSize == destSize))
+                    {
+                        yield break;
+                    }
+                }
+                catch (Exception e)
+                {
+                  // ignore issues, just force a reload anyway.    
+                  LogUtility.LogWarning("There was an issue checking header of " + sourcePath + " - " + e.Message);                    
+                }
+            }
+            
+//             Debug.Log ("Mirroring " + sourcePath + " to " + destPath);
             
             using (UnityWebRequest request = UnityWebRequest.Get (sourcePath))
             {
@@ -264,6 +292,10 @@ namespace ModTool.Shared
                     FileInfo file = new FileInfo(destPath);
                     file.Directory.Create(); // create directories if required.
                     File.WriteAllBytes (destPath, request.downloadHandler.data);
+                    if (validSourceTime)
+                    {
+                        File.SetLastWriteTime (destPath, sourceTime);
+                    }
                     yield break;
                 }
             }
