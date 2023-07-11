@@ -9,12 +9,12 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
-namespace ModTool
+namespace ModTool.Shared
 {
     /// <summary>
     /// Represents a directory that is monitored for Mods.
     /// </summary>
-    internal class ModSearchDirectory : IDisposable
+    public class ModSearchDirectory : IDisposable
     {
         /// <summary>
         /// Occurs when a new Mod has been found.
@@ -38,7 +38,7 @@ namespace ModTool
         /// </summary>
         public string path { get; private set; }
 
-        private Dictionary<string, long> _modPaths;
+        private Dictionary<string, long> _modPaths; // The .info files.
 
         private bool refreshEvent;
         private bool disposed;
@@ -66,7 +66,7 @@ namespace ModTool
 
             refreshEvent = false;
 
-            DirectorySearch._StartCoroutine(BackgroundRefresh ());
+            ModInfo.WebCoroutine._StartCoroutine(BackgroundRefresh ());
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace ModTool
         {
             refreshEvent = true;
         }
-
+        
         private IEnumerator BackgroundRefresh()
         {
             yield return new WaitUntil (() => refreshEvent);
@@ -99,7 +99,7 @@ namespace ModTool
 
             // ModCurrentPaths contains the latest view of any files.
             Dictionary<string, long> modCurrentPaths = null;
-            yield return DirectorySearch._StartCoroutine (GetModPaths((r) => { modCurrentPaths = r; }, ""));
+            yield return ModInfo.WebCoroutine._StartCoroutine (ModInfo.GetModPaths(path, (r) => { modCurrentPaths = r; }, ""));
             
             // _ModPaths contains the previous view of any info files.
             // Scan for changes, and signal where differences exist.            
@@ -137,8 +137,8 @@ namespace ModTool
                     if (prevpath.StartsWith (dirname) && modCurrentPaths[path] > _modPaths[prevpath])
                     {
                         changed = true;
-                        _modPaths[path] = modCurrentPaths[path];
-                        UpdateModPath(path);
+                        _modPaths[prevpath] = modCurrentPaths[path];
+                        UpdateModPath(prevpath);
                         break;
                     }
                 }
@@ -147,7 +147,7 @@ namespace ModTool
                 if (!_modPaths.ContainsKey(path) && (path.EndsWith (".info")))
                 {
                     changed = true;
-                    AddModPath(path);
+                    AddModPath(path, modCurrentPaths[path]);
                 }
             }
 
@@ -157,12 +157,12 @@ namespace ModTool
             yield return null;
         }
 
-        private void AddModPath(string path)
+        private void AddModPath(string path, long timestamp)
         {
             if (_modPaths.ContainsKey(path))
                 return;
 
-            _modPaths.Add(path, DateTime.Now.Ticks);
+            _modPaths.Add(path, timestamp);
 
             ModFound?.Invoke(path);
         }
@@ -187,56 +187,6 @@ namespace ModTool
             ModChanged?.Invoke(path);
         }
              
-        class UnityTrustCertificate : CertificateHandler
-        {
-            protected override bool ValidateCertificate(byte[] certificateData)
-            {
-                return true;
-            }
-        }
-                
-        private IEnumerator GetModPaths(System.Action<Dictionary<string, long>> callback, string endsWith)
-        {
-            if (path.StartsWith ("http"))
-            {
-                using (UnityWebRequest webRequest = UnityWebRequest.Get(Path.Combine (path, "FileList")))
-                {
-                    webRequest.certificateHandler = new UnityTrustCertificate ();
-                    yield return webRequest.SendWebRequest();
-                    if (webRequest.result == UnityWebRequest.Result.Success)
-                    {
-                        Dictionary<string, long> modpaths = new Dictionary<string, long> ();
-                        foreach (string path in webRequest.downloadHandler.text.Split (new [] { '\r', '\n' }).Select (x => Path.Combine (path, x)))
-                        {
-                            if (path.EndsWith (endsWith))
-                            {
-                              modpaths.Add (path, 1);
-                            }
-                        }
-                        callback (modpaths);
-                        yield break;
-                    }
-                }
-                callback (new Dictionary<string, long> ());
-            }
-            else
-            {
-                Dictionary<string, long> modpaths = new Dictionary<string, long> ();
-                string [] paths = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
-                paths = paths.Concat (Directory.GetDirectories(path, "*", SearchOption.AllDirectories)).ToArray ();
-                foreach (string path in paths)
-                {
-                    if (path.EndsWith (endsWith))
-                    {
-                      modpaths.Add (path, File.GetLastWriteTime (path).Ticks);
-                    }
-                }
-                callback (modpaths);
-            }
-            
-            yield return null;
-        }
-
         /// <summary>
         /// Releases all resources used by the ModSearchDirectory.
         /// </summary>
@@ -248,22 +198,6 @@ namespace ModTool
 
             disposed = true;
             refreshEvent = true;
-        }
-    }
-    
-    // A bit of a hack, to get coroutines running on a non-MonoBehaviour class. Relies on the scene having at
-    // least one object, and that object being active.
-    internal class DirectorySearch : MonoBehaviour
-    {
-        private static DirectorySearch searchComponent;
-        
-        public static Coroutine _StartCoroutine (IEnumerator iEnumerator)
-        {
-            if (searchComponent == null)
-            {
-              searchComponent = SceneManager.GetActiveScene ().GetRootGameObjects ()[0].AddComponent <DirectorySearch> ();
-            }
-            return searchComponent.StartCoroutine (iEnumerator);
         }
     }
 }
