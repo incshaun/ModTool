@@ -74,7 +74,6 @@ namespace ModTool.Editor
                 Path.Combine(modToolDirectory, Path.Combine("ModTool.Shared", "ModToolSettings.cs")),
                 Path.Combine(modToolDirectory, Path.Combine("ModTool.Shared", "Restriction.cs")),
                 Path.Combine(modToolDirectory, Path.Combine("ModTool.Shared", "Singleton.cs")),
-                Path.Combine(modToolDirectory, Path.Combine("ModTool.Shared", "ModTool.Shared.asmdef")),
 
 //                 Path.Combine(modToolDirectory, "ModTool.Interface.dll"),
 //                 Path.Combine(modToolDirectory, "ModTool.Interface.xml"),

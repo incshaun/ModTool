@@ -23,6 +23,7 @@ See the included examples and the [Documentation](http://hellomeow.net/modtool/d
 - Unity can't deserialize fields of \[Serializable\] types that have been loaded at runtime. This means that a Mod can't use fields of its own serializable Types in the inspector. Serializable types that aren't loaded at runtime and are part of the game do work.
 - Mods have to rely on the game's project settings. This means mods can not define their own new tags, layers and input axes. The created Mod exporter includes the game's project settings
 - Supports Unity 2019.4 and up
+- Noted an issue, apparently with calling Instantiate within a script in the mod. May need to be managed by calling outside of the mod.
 
 ## Acknowledgments
 
@@ -43,7 +44,7 @@ See the included examples and the [Documentation](http://hellomeow.net/modtool/d
 
 ## Using in the Unity Editor under Linux
 
-The deploymont process has been reverted to send the source script files, rather than the compiled dlls, when creating and generating mods. This simplifies
+The deployment process has been reverted to send the source script files, rather than the compiled dlls, when creating and generating mods. This simplifies
 the process when making other changes to the facilities offered. 
 
 Thus this project can be used almost directly by copying it into an existing Unity project. Hard links are useful (avoid soft links, Unity doesn't seem to detect
@@ -52,8 +53,6 @@ Assuming you create a ModTool directory directly in the Assets of your project, 
 within that. You will also need the ModTool, ModTool.Shared and ModTool.Interface folders added to the ModTool directory. Add in the Mono.Cecil and Resources folders
 within the ModTool directory as well (these can be obtained from the version on the Asset Store). The Resources folder contains various scriptable objects, 
 including CodeSettings and ModExporter.
-
-Create an Assembly Definition in the ModTool.Shared directory, named ModTool.Shared. This is to prevent ModTool being exported as part of the mod.
 
 Should it be necessary to use dlls in the future, these seem to be available in the Library/ScriptAssemblies folder of the project. You will need
 to create additional Assembly Definition files in the ModTool, ModTool.Interface and ModTool.Editor.Exporting to get those required. That in ModTool.Editor.Exporting
