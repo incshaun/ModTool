@@ -374,7 +374,22 @@ namespace ModTool.Shared
             {
                 if (coroutineComponent == null)
                 {
-                  coroutineComponent = SceneManager.GetActiveScene ().GetRootGameObjects ()[0].AddComponent <WebCoroutine> ();
+                  // Find the first active component.
+                  bool set = false;
+                  foreach (GameObject g in SceneManager.GetActiveScene ().GetRootGameObjects ())
+                  {
+                      if (g.activeInHierarchy)
+                      {
+                          coroutineComponent = g.AddComponent <WebCoroutine> ();
+                          set = true;
+                          break;
+                      }
+                  }
+//                   Debug.Log ("Coroutine component: " + coroutineComponent);
+                  if (!set)
+                  {
+                      Debug.Log ("Unable to find single active scene element to allow ModInfo coroutines");
+                  }
                 }
                 return coroutineComponent.StartCoroutine (iEnumerator);
             }

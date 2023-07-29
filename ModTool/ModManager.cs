@@ -237,6 +237,19 @@ namespace ModTool
             ModsChanged?.Invoke();
         }
 
+        // Find the mod of the given name, that is available for the current platform.
+        public static Mod FindMod (string name)
+        {
+            foreach (Mod other in _mods)
+            {
+                if ((other.modInfo.name == name) && (other.modInfo.platforms == ModPlatformExtensions.GetModPlatform (Application.platform)))
+                {
+                   return other;
+                }
+            }
+            return null;
+        }
+        
         private static void OnDomainUnload(object sender, EventArgs e)
         {
             foreach (var searchDirectory in searchDirectories)
